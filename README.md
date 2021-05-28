@@ -95,3 +95,90 @@ Attention : les IPs sont hardcoder et doiventdonc toujours être vérifiées pou
 - Exécuter le script `./docker-images/apache-reverse-proxy/run.sh`pour run les containers.
 - Depuis un terminal (linux) aller modifier le fichier hosts en lançant `sudo !!`ou `sudo nano /etc/hosts`et ajouter une ligne contenant notre adresse IP et le nom du domaine tel que : `192.168.1.123 address.res.ch`.
 - Accéder au site dynamique express `http://address.res.ch:8080/api/address/`.
+
+## Etape 4 : Ajax avec jQuery
+
+Créer un fichier javascript afin de pouvoir exécuter une fonction jQuerry. Le script en question : `address.js`
+
+```javascript
+$(function() {
+    
+    function loadAddress() {
+        $.getJSON( "/api/address/", function( address ) {
+            var message = address[0].adress + " " + address[0].city + " " + address[0].country;
+            $(".hereToModify").text(message);
+        });    
+    };
+    
+    loadAddress();
+    setInterval( loadAddress, 2000 );
+
+});
+```
+
+On remarque que la fin de la fonction loadAddress() on viens écrire le "message" à un "flag" hereToModify. Ce flag correspond enfaite à la class d'une balise span englobant une partie de notre page html :
+
+```html
+<h2><span class="hereToModify">We are team of talented designers making websites with Bootstrap</span></h2>
+```
+
+et on a dû ajouter à la fin du fichier index.html les includes de notre script créé ainsi que l'include du module jQuerry :
+
+```html
+<!-- jQuery module -->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<!-- Custom script -->
+  <script src="assets/js/address.js"></script>
+```
+
+La mise en place de cela n'a pas impliqué de changement dans l'exécution de nos docker.
+
+Nous avons tout de même ajouté, dans les dockerfile, l'installation automatique de nano afin de facilité nos tests sur les containers avant de les faire dans notre implémentation.
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install -y nano 
+```
+
+## Etape 5 : configuration dynamique du reverse proxy
+
+Nous avons rajouter deux fichier a notre environnement. Le premier permettant de configurer via un script php nos adresses ip par le biais des variables d'environnement. Ce qui nous permet de enfin régler le fait de hardcoder nos adresses ip dans les fichiers de configuration. `./docker-images/apache-reverse-proxy/templates/config-tempate.php`
+
+```php
+<?php 
+    $dynamic_app = getenv('DYNAMIC_APP');
+    $static_app = getenv('STATIC_APP');
+?>
+
+
+<VirtualHost *:80>
+    ServerName address.res.ch
+
+    ProxyPass '/api/address/' 'http://<?php print "$dynamic_app"?>/'
+    ProxyPassReverse '/api/address/' 'http://<?php print "$dynamic_app"?>/'
+
+    ProxyPass '/' 'http://<?php print "$static_app"?>/'
+    ProxyPassReverse '/' 'http://<?php print "$static_app"?>/'
+
+
+</VirtualHost>
+```
+
+Nous avons également créer une "surcharge" du fichier apache2-foreground afin de pouvoir utiliser la génération de notre script php pour remplacer la config précédemment faîtes: 
+
+```php
+#!/bin/bashset -e: "${APACHE_CONFDIR:=/etc/apache2}": "${APACHE_ENVVARS:=$APACHE_CONFDIR/envvars}"if test -f "$APACHE_ENVVARS"; then    . "$APACHE_ENVVARS"fi# Apache gets grumpy about PID files pre-existing: "${APACHE_RUN_DIR:=/var/run/apache2}": "${APACHE_PID_FILE:=$APACHE_RUN_DIR/apache2.pid}"rm -f "$APACHE_PID_FILE"php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.confrm -f /var/run/apache2/apache2.pidexec apache2 -DFOREGROUND
+```
+
+nous avons ensuite ajouter deux lignes au dockerfile 
+
+```dockerfile
+COPY apache2-foreground /usr/local/bin/COPY templates /var/apache2/templates
+```
+
+ Puis il nous suffit comme avant de lancé les script build et run, mais de spécifier en attributs les adreese ip : 
+
+```
+./docker-images/apache-reverse-proxy/build.sh./docker-images/apache-reverse-proxy/run.sh 172.17.0.2 172.17.0.3
+```
+
