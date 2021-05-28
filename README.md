@@ -191,12 +191,14 @@ exec apache2 -DFOREGROUND
 nous avons ensuite ajouter deux lignes au dockerfile 
 
 ```dockerfile
-COPY apache2-foreground /usr/local/bin/COPY templates /var/apache2/templates
+COPY apache2-foreground /usr/local/bin/
+COPY templates /var/apache2/templates
 ```
 
  Puis il nous suffit comme avant de lancé les script build et run, mais de spécifier en attributs les adreese ip : 
 
 ```
-./docker-images/apache-reverse-proxy/build.sh./docker-images/apache-reverse-proxy/run.sh 172.17.0.2 172.17.0.3
+./docker-images/apache-reverse-proxy/build.sh
+./docker-images/apache-reverse-proxy/run.sh 172.17.0.2 172.17.0.3
 ```
 
