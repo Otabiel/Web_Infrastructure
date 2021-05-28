@@ -167,7 +167,25 @@ Nous avons rajouter deux fichier a notre environnement. Le premier permettant de
 Nous avons également créer une "surcharge" du fichier apache2-foreground afin de pouvoir utiliser la génération de notre script php pour remplacer la config précédemment faîtes: 
 
 ```php
-#!/bin/bashset -e: "${APACHE_CONFDIR:=/etc/apache2}": "${APACHE_ENVVARS:=$APACHE_CONFDIR/envvars}"if test -f "$APACHE_ENVVARS"; then    . "$APACHE_ENVVARS"fi# Apache gets grumpy about PID files pre-existing: "${APACHE_RUN_DIR:=/var/run/apache2}": "${APACHE_PID_FILE:=$APACHE_RUN_DIR/apache2.pid}"rm -f "$APACHE_PID_FILE"php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.confrm -f /var/run/apache2/apache2.pidexec apache2 -DFOREGROUND
+#!/bin/bash
+set -e
+
+: "${APACHE_CONFDIR:=/etc/apache2}"
+: "${APACHE_ENVVARS:=$APACHE_CONFDIR/envvars}"
+if test -f "$APACHE_ENVVARS"; then
+    . "$APACHE_ENVVARS"
+fi
+
+# Apache gets grumpy about PID files pre-existing
+: "${APACHE_RUN_DIR:=/var/run/apache2}"
+: "${APACHE_PID_FILE:=$APACHE_RUN_DIR/apache2.pid}"
+rm -f "$APACHE_PID_FILE"
+
+
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+
+rm -f /var/run/apache2/apache2.pid
+exec apache2 -DFOREGROUND
 ```
 
 nous avons ensuite ajouter deux lignes au dockerfile 
