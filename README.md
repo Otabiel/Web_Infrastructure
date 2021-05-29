@@ -302,5 +302,87 @@ Et si on ouvre deux fois les adresses `address.res.ch:8080` on obitent deux page
 
 Mais actuellement lorsque que l'on charge une page nous ne sommes pas garantit de rester sur le même serveur, nous pouvons être rebalancer entre le "[1]" et le "[2]".
 
+## Étape 6 : Load balancing, round-robin vs sticky sessions
 
+Nous devons mettre en place des "sticky sessions" afin de ne plus changer aléatoirement de serveur a chaque refresh, mais de garder sa session sur le même serveur.
 
+Pour ce faire nous avons modifier le script php pour y ajouter un système de "sticky sessions" par Id de route via la ligne 22 `ProxySet stickysession=ROUTEID`. Et nous retenons ce dernier dans un cookie "Header" ligne 11.
+*src: http://docs.motechproject.org/en/latest/deployment/sticky_session_apache.html#method-1-using-existing-session-cookie*
+
+```php+HTML
+<?php
+    $static_app_01 = getenv('STATIC_APP_01');
+    $static_app_02 = getenv('STATIC_APP_02');
+    $dynamic_app_01 = getenv('DYNAMIC_APP_01');
+    $dynamic_app_02 = getenv('DYNAMIC_APP_02');
+?>
+
+<VirtualHost *:80>
+    ServerName address.res.ch
+    
+    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+
+    <Proxy balancer://dynamic_app>
+        BalancerMember 'http://<?php print "$dynamic_app_01"?>'
+        BalancerMember 'http://<?php print "$dynamic_app_02"?>'
+    </Proxy>
+
+    <Proxy balancer://static_app>
+        BalancerMember 'http://<?php print "$static_app_01"?>' route=1
+        BalancerMember 'http://<?php print "$static_app_02"?>' route=2
+        ProxySet stickysession=ROUTEID
+    </Proxy>
+
+    ProxyPass '/api/address/' 'balancer://dynamic_app/'
+    ProxyPassReverse '/api/address/' 'balancer://dynamic_app/'
+
+    ProxyPass '/' 'balancer://static_app/'
+    ProxyPassReverse '/' 'balancer://static_app/'
+</VirtualHost>
+```
+
+Et nous avons donc activé les header dans le les options d'apache dans le dockerfile : 
+
+```dockerfile
+FROM php:7.2-apache
+
+RUN apt-get update && \
+    apt-get install -y nano
+
+COPY apache2-foreground /usr/local/bin/
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http proxy_balancer lbmethod_byrequests headers
+RUN a2ensite 000-* 001-*
+```
+
+Pour testé il faut comme précédement, si les containers sont toujours en cours d'exécution, les arrêter avec `docker kill` et lancer la commande :
+
+```shell
+docker rm `docker ps -qa`
+```
+
+Ensuite lancé la construction des containers et l'exécution des sites statiques et des applications dynamique avec les scripts fournis : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/build.sh
+$ ./docker-images/apache-reverse-proxy/run.sh
+```
+
+Si nécessaire, par la on entends si d'autres containers occupe potentiellement des adresses IP. On vous conseil de vérifier les adresses ip avec : 
+
+```shell
+$ docker inspect apache-static-1 | grep -i ipaddr
+$ docker inspect apache-static-2 | grep -i ipaddr
+$ docker inspect express-dynamic-1 | grep -i ipaddr
+$ docker inspect express-dynamic-2 | grep -i ipaddr
+```
+
+Et ensuite lancé avec le script fourni le proxy : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17.0.4 172.17.0.5
+```
+
+Et on ouvrant une page internet à l'adresse `address.res.ch` on remarque qu'on ne quittera plus la page sur laquelle nous avons été dirigé sauf si l'on supprime nos cookie pour pouvoir en recevoir un avec une nouvelle route id.

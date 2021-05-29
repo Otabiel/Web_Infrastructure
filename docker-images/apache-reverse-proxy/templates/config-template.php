@@ -8,14 +8,17 @@
 <VirtualHost *:80>
     ServerName address.res.ch
     
+    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+
     <Proxy balancer://dynamic_app>
         BalancerMember 'http://<?php print "$dynamic_app_01"?>'
         BalancerMember 'http://<?php print "$dynamic_app_02"?>'
     </Proxy>
 
     <Proxy balancer://static_app>
-        BalancerMember 'http://<?php print "$static_app_01"?>'
-        BalancerMember 'http://<?php print "$static_app_02"?>'
+        BalancerMember 'http://<?php print "$static_app_01"?>' route=1
+        BalancerMember 'http://<?php print "$static_app_02"?>' route=2
+        ProxySet stickysession=ROUTEID
     </Proxy>
 
     ProxyPass '/api/address/' 'balancer://dynamic_app/'
