@@ -12,6 +12,11 @@ fi
 : "${APACHE_PID_FILE:=$APACHE_RUN_DIR/apache2.pid}"
 rm -f "$APACHE_PID_FILE"
 
+echo "Setup for the RES lab"
+echo "Static App 01 URL: $STATIC_APP_01"
+echo "Static App 02 URL: $STATIC_APP_02"
+echo "Dynamic App 01 URL: $DYNAMIC_APP_01"
+echo "Dynamic App 02 URL: $DYNAMIC_APP_02"
 
 php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
 

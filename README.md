@@ -195,10 +195,108 @@ COPY apache2-foreground /usr/local/bin/
 COPY templates /var/apache2/templates
 ```
 
+Pour tester il faut, si des containers des étapes précédents sont toujours en cours de lancement les arrêtés avec docker kill puis d'exécuter la commande : 
+
+```shell
+docker rm `docker ps -qa`
+```
+
  Puis il nous suffit comme avant de lancé les script build et run, mais de spécifier en attributs les adreese ip : 
 
 ```
 ./docker-images/apache-reverse-proxy/build.sh
 ./docker-images/apache-reverse-proxy/run.sh 172.17.0.2 172.17.0.3
 ```
+
+## Étape 6 : Load balancing: multiple server nodes
+
+Le load balancing désigne le processus de répartition d'un ensemble de tâches sur un ensemble de ressources. Donc dans notre infrastructure nous allons testé cela en dupliquant notre site statique apache et notre script javascript sur 	express.
+
+Afin de voir des différence entre les deux sites nous avons dupliqué `apache_php_image` afin de faire apparaître une différence visuel.
+
+Premièrement nous alons donc modifier notre script php d'allocation d'ip dynamique en lui ajoutant la possiblité d'avoir du choix dans ces ressources 
+*src: https://stackoverflow.com/questions/28663033/how-can-i-set-up-a-load-balancer-for-multiple-virtual-hosts-apache/28664733*
+
+```php+HTML
+<?php
+    $static_app_01 = getenv('STATIC_APP_01');
+    $static_app_02 = getenv('STATIC_APP_02');
+    $dynamic_app_01 = getenv('DYNAMIC_APP_01');
+    $dynamic_app_02 = getenv('DYNAMIC_APP_02');
+?>
+
+<VirtualHost *:80>
+    ServerName address.res.ch
+    
+    <Proxy balancer://dynamic_app>
+        BalancerMember 'http://<?php print "$dynamic_app_01"?>'
+        BalancerMember 'http://<?php print "$dynamic_app_02"?>'
+    </Proxy>
+
+    <Proxy balancer://static_app>
+        BalancerMember 'http://<?php print "$static_app_01"?>'
+        BalancerMember 'http://<?php print "$static_app_02"?>'
+    </Proxy>
+
+    ProxyPass '/api/address/' 'balancer://dynamic_app/'
+    ProxyPassReverse '/api/address/' 'balancer://dynamic_app/'
+
+    ProxyPass '/' 'balancer://static_app/'
+    ProxyPassReverse '/' 'balancer://static_app/'
+</VirtualHost>
+```
+
+Donc comme on peut le voir on a rajouter les balises "Proxy" qui va permettre de mettre un balancer entre les deux ip fournie pour nos deux api dynamique et nos deux sites statiques.
+
+Nous avons ensuite dû ajouter aux Dockerfile du proxy l'activation du load balancing en ajoutant : `proxy_balancer lbmethod_byrequests` à la commande `RUN a2enmod` pour activé le proxy balancing
+
+```dockerfile
+FROM php:7.2-apache
+
+RUN apt-get update && \
+    apt-get install -y nano
+
+COPY apache2-foreground /usr/local/bin/
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http proxy_balancer lbmethod_byrequests
+RUN a2ensite 000-* 001-*
+```
+
+On a ensuite modifié les script de construction des containers et de leur lancement.
+
+Pour testé il faut comme précédement, si les containers sont toujours en cours d'exécution, les arrêter avec `docker kill` et lancer la commande :
+
+```shell
+docker rm `docker ps -qa`
+```
+
+Ensuite lancé la construction des containers et l'exécution des sites statiques et des applications dynamique avec les scripts fournis : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/build.sh
+$ ./docker-images/apache-reverse-proxy/run.sh
+```
+
+Si nécessaire, par la on entends si d'autres containers occupe potentiellement des adresses IP. On vous conseil de vérifier les adresses ip avec : 
+
+```shell
+$ docker inspect apache-static-1 | grep -i ipaddr
+$ docker inspect apache-static-2 | grep -i ipaddr
+$ docker inspect express-dynamic-1 | grep -i ipaddr
+$ docker inspect express-dynamic-2 | grep -i ipaddr
+```
+
+Et ensuite lancé avec le script fourni le proxy : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17.0.4 172.17.0.5
+```
+
+Et si on ouvre deux fois les adresses `address.res.ch:8080` on obitent deux pages, donc le load balancing fonctionne bien.
+
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/load_balancing1.png)
+
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/load_balancing_2.png)
 
