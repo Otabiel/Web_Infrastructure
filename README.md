@@ -386,3 +386,108 @@ $ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17
 ```
 
 Et on ouvrant une page internet à l'adresse `address.res.ch` on remarque qu'on ne quittera plus la page sur laquelle nous avons été dirigé sauf si l'on supprime nos cookie pour pouvoir en recevoir un avec une nouvelle route id.
+
+## Étape 7  : Gestion de cluster dynamique
+
+Nous avons ajouter dans le script php :
+
+```
+<Location "/balancer-manager/">
+	SetHandler balancer-manager
+</Location>
+    
+ProxyPass '/balancer-manager/' !    
+```
+
+*src: https://httpd.apache.org/docs/2.4/howto/reverse_proxy.html "Gestion du répartiteur de charge"*
+
+Qui comme les sources le montre nous permet d'activer la gestion du cluster dynamique.
+
+Pour testé il faut comme précédement, si les containers sont toujours en cours d'exécution, les arrêter avec `docker kill` et lancer la commande :
+
+```shell
+docker rm `docker ps -qa`
+```
+
+Ensuite lancé la construction des containers et l'exécution des sites statiques et des applications dynamique avec les scripts fournis : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/build.sh
+$ ./docker-images/apache-reverse-proxy/run.sh
+```
+
+Si nécessaire, par la on entends si d'autres containers occupe potentiellement des adresses IP. On vous conseil de vérifier les adresses ip avec : 
+
+```shell
+$ docker inspect apache-static-1 | grep -i ipaddr
+$ docker inspect apache-static-2 | grep -i ipaddr
+$ docker inspect express-dynamic-1 | grep -i ipaddr
+$ docker inspect express-dynamic-2 | grep -i ipaddr
+```
+
+Et ensuite lancé avec le script fourni le proxy : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17.0.4 172.17.0.5
+```
+
+Et en ouvrant une page internet à l'adresse `http://address.res.ch:8080/balancer-manager/` on retrouve bien notre gestionnaire désiré.
+
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/cluster-manger-dynamic.png)
+
+## Étape 8 : Gestion d'une interface utilisateur
+
+Nous n'avons rien du mettre en place pour pouvoir avoir une interface web nous permettant d'avoir un visuel sur l'implémentation de container mis en place.
+
+Pour pouvoir utiliser une interface utilisateur pour pouvoir gérer les containers plus facilement il faut comme précédement, si les containers sont toujours en cours d'exécution, les arrêter avec `docker kill` et lancer la commande :
+
+```shell
+docker rm `docker ps -qa`
+```
+
+Ensuite lancé la construction des containers et l'exécution des sites statiques et des applications dynamique avec les scripts fournis : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/build.sh
+$ ./docker-images/apache-reverse-proxy/run.sh
+```
+
+Si nécessaire, par la on entends si d'autres containers occupe potentiellement des adresses IP. On vous conseil de vérifier les adresses ip avec : 
+
+```shell
+$ docker inspect apache-static-1 | grep -i ipaddr
+$ docker inspect apache-static-2 | grep -i ipaddr
+$ docker inspect express-dynamic-1 | grep -i ipaddr
+$ docker inspect express-dynamic-2 | grep -i ipaddr
+```
+
+Et ensuite lancé avec le script fourni le proxy : 
+
+```shell
+$ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17.0.4 172.17.0.5
+```
+
+Pour enfin lancé la commande suivante : 
+
+```shell
+$ docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer
+```
+
+Puis de ce connecter depuis un navigateur au site `localhost:9000`.
+
+Cela vous ammène sur le portail portainer.io ou vous devrez vous créer un compte administrateur 
+
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/portainer_register.png)
+
+Une fois connectez, vous vous retrouverez sur une page pour choisir qu'elle environnement vous voulez administrer, sélectionnez "Local"
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/select_local.png)
+
+Sur le menu principal vous verez vos envrionnement à manager, normalement qu'un seul qui est celui en local. Vous pouvez cliquer dessus
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/1.png)
+
+Ensuite vous verez le résumé de l'envrionnement et ce qui le compose. Cliquer sur "Containers" pour pouvoir voir les containers.
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/2.png)
+
+Pour finalement arrivé sur l'écran de gestion des containers.
+![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/3.png)
+
