@@ -300,3 +300,7 @@ Et si on ouvre deux fois les adresses `address.res.ch:8080` on obitent deux page
 
 ![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/load_balancing_2.png)
 
+Mais actuellement lorsque que l'on charge une page nous ne sommes pas garantit de rester sur le même serveur, nous pouvons être rebalancer entre le "[1]" et le "[2]".
+
+
+
