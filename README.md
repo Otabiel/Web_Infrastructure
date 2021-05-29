@@ -296,9 +296,9 @@ $ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17
 
 Et si on ouvre deux fois les adresses `address.res.ch:8080` on obitent deux pages, donc le load balancing fonctionne bien.
 
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/load_balancing1.png)
+![](./img/load_balancing1.png)
 
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/load_balancing_2.png)
+![](./img/load_balancing_2.png)
 
 Mais actuellement lorsque que l'on charge une page nous ne sommes pas garantit de rester sur le même serveur, nous pouvons être rebalancer entre le "[1]" et le "[2]".
 
@@ -433,7 +433,7 @@ $ ./docker-images/apache-reverse-proxy/run_proxy.sh 172.17.0.2 172.17.0.3 172.17
 
 Et en ouvrant une page internet à l'adresse `http://address.res.ch:8080/balancer-manager/` on retrouve bien notre gestionnaire désiré.
 
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/cluster-manger-dynamic.png)
+![](./img/cluster-manger-dynamic.png)
 
 ## Étape 8 : Gestion d'une interface utilisateur
 
@@ -477,17 +477,17 @@ Puis de ce connecter depuis un navigateur au site `localhost:9000`.
 
 Cela vous ammène sur le portail portainer.io ou vous devrez vous créer un compte administrateur 
 
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/portainer_register.png)
+![](./img/portainer_register.png)
 
 Une fois connectez, vous vous retrouverez sur une page pour choisir qu'elle environnement vous voulez administrer, sélectionnez "Local"
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/select_local.png)
+![](./img/select_local.png)
 
 Sur le menu principal vous verez vos envrionnement à manager, normalement qu'un seul qui est celui en local. Vous pouvez cliquer dessus
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/1.png)
+![](./img/1.png)
 
 Ensuite vous verez le résumé de l'envrionnement et ce qui le compose. Cliquer sur "Containers" pour pouvoir voir les containers.
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/2.png)
+![](./img/2.png)
 
 Pour finalement arrivé sur l'écran de gestion des containers.
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/3.png)
+![](./img/3.png)
 
