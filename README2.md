@@ -250,9 +250,10 @@ Il est également intéressant de parler des deux lignes RUN;
 
 ## Démonstration
 
-**Important** 
+**Avant toute chose** 
 Il faut ajouter dans votre ficheir hosts une ligne contenant votre adresse ip suivi du nom de domaine que a donné pour le "ServerName" tel que : ` 192.168.1.123 address.res.ch`
 Vous pouvez modifier votre fichier hosts en lançant depuis un terminal  `sudo !!`ou `sudo nano /etc/hosts`
+Et si pas déjà fait il faudra construire les dépendances node avec la commande `npm install` depuis le répertoire `./docker-images/express-image/src`. (si on n'a pas la commande npm -> `https://www.npmjs.com/`)
 
 1. S'assurer qu'aucun container portant un des noms suivant ne soit en cours d'exécution avec la commande `docker ps` : apache-static-1, apache-static-2, express-dynamic-1, express-dynamic-2.
 
