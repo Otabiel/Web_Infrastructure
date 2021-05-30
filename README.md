@@ -341,19 +341,19 @@ Puis de ce connecter depuis un navigateur au site `localhost:9000`.
 
 Cela vous ammène sur le portail portainer.io ou vous devrez vous créer un compte administrateur 
 
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/portainer_register.png)
+![](./img/portainer_register.png)
 
 Une fois connectez, vous vous retrouverez sur une page pour choisir qu'elle environnement vous voulez administrer, sélectionnez "Local"
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/select_local.png)
+![](./img/select_local.png)
 
 Sur le menu principal vous verez vos envrionnement à manager, normalement qu'un seul qui est celui en local. Vous pouvez cliquer dessus
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/1.png)
+![](./img/1.png)
 
 Ensuite vous verez le résumé de l'envrionnement et ce qui le compose. Cliquer sur "Containers" pour pouvoir voir les containers.
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/2.png)
+![](./img/2.png)
 
 Pour finalement arrivé sur l'écran de gestion des containers.
-![](/home/bruno/Bureau/Cours/RES/Web_Infrastructure/img/3.png)
+![](./img/3.png)
 
 
 
