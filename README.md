@@ -188,7 +188,7 @@ rm -f /var/run/apache2/apache2.pid
 exec apache2 -DFOREGROUND
 ```
 
-nous avons ensuite ajouter deux lignes au dockerfile 
+RUN a2ensitenous avons ensuite ajouter deux lignes au dockerfile 
 
 ```dockerfile
 COPY apache2-foreground /usr/local/bin/
